@@ -1,23 +1,46 @@
-const app = require('./backend');
+const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const dotenv = require('dotenv');
+const empresasRoutes = require('./routes/empresas');
+const errorMiddleware = require('./middlewares/errorMiddleware');
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3001;
+const app = express();
 
-// Conectar ao MongoDB (caso não tenha sido conectado no backend.js)
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Conectado ao MongoDB');
+// Configurar CORS para permitir requisições de localhost:4000
+app.use(cors({
+  origin: 'http://localhost:4000', // Origem do frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Middlewares
+app.use(express.json());
+
+// Rotas
+app.use('/empresas', empresasRoutes);
+
+// Middleware de erro
+app.use(errorMiddleware);
+
+// Conectar ao MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Conectado ao MongoDB');
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando na porta ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Erro ao conectar ao MongoDB:', err.message);
+    process.exit(1);
   });
-})
-.catch(err => {
-  console.error('Erro ao conectar no MongoDB:', err);
-});
+
+module.exports = app; 

@@ -1,147 +1,79 @@
-import { toast } from "sonner";
-import { Company } from "@/components/CnpjExplorer";
-import { CnpjFilters } from "@/types/cnpj";
+import axios from 'axios';
 
-export const fetchCnpjData = async (cnpj: string): Promise<Company | null> => {
+interface Company {
+  cnpj: string;
+  razao_social: string;
+  uf: string;
+  descricao_identificador_matriz_filial: string;
+  data_inicio_atividade: string;
+  descricao_situacao_cadastral: string;
+  [key: string]: any;
+}
+
+interface SearchResponse {
+  companies: Company[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+interface Filters {
+  cnpj?: string;
+  tipo?: string;
+  situacao_cadastral?: string;
+  uf?: string;
+  data_inicio_atividade?: string;
+  municipio?: string;
+  bairro?: string;
+  cep?: string;
+  cnae_fiscal?: string;
+  razao_social?: string;
+  page?: number;
+  limit?: number;
+}
+
+const API_URL = 'http://localhost:3001/empresas';
+
+// Função para buscar dados de um CNPJ específico
+export const fetchCnpjData = async (cnpj: string): Promise<Company> => {
   try {
-    const cleanCnpj = cnpj.replace(/[^\d]/g, "");
-    const response = await fetch(`https://minhareceita.org/${cleanCnpj}`);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        toast.error(`CNPJ ${cnpj} não encontrado`);
-        return null;
-      }
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log("Dados retornados por fetchCnpjData:", data);
-    return data;
+    console.log(`Buscando dados do CNPJ ${cnpj}`);
+    const response = await axios.post(API_URL, { cnpj });
+    console.log('Resposta recebida:', response.data);
+    return response.data;
   } catch (error) {
-    toast.error("Erro ao buscar dados do CNPJ");
-    console.error("Error fetching CNPJ data:", error);
-    return null;
+    console.error(`Erro ao buscar dados do CNPJ ${cnpj}:`, error);
+    throw error;
   }
 };
 
-export const searchCompaniesByFilters = async (filters: CnpjFilters): Promise<Company[]> => {
+// Função para buscar empresas com filtros (renomeada para searchCompaniesByFilters)
+export const searchCompaniesByFilters = async (filters: Filters): Promise<SearchResponse> => {
   try {
-    const params = new URLSearchParams();
-    
-    if (filters.tipo.length > 0) {
-      params.append("tipo", filters.tipo.join(","));
-    }
-    
-    if (filters.dataAberturaMin) {
-      params.append("data_abertura_inicial", filters.dataAberturaMin);
-    }
-    
-    if (filters.dataAberturaMax) {
-      params.append("data_abertura_final", filters.dataAberturaMax);
-    }
-    
-    if (filters.situacaoCadastral.length > 0) {
-      params.append("situacao_cadastral", filters.situacaoCadastral.join(","));
-    }
-    
-    if (filters.uf.length > 0 && !filters.uf.includes("todos_estados")) {
-      params.append("uf", filters.uf.join(","));
-    }
-    
-    if (filters.municipio.length > 0) {
-      params.append("municipio", filters.municipio.join(","));
-    }
-    
-    if (filters.bairro.length > 0) {
-      params.append("bairro", filters.bairro.join(","));
-    }
-    
-    if (filters.cep) {
-      params.append("cep", filters.cep);
-    }
-    
-    if (filters.comTelefone) {
-      params.append("com_telefone", "true");
-      if (filters.tipoTelefone.length > 0) {
-        params.append("tipo_telefone", filters.tipoTelefone.join(","));
-      }
-    }
-    
-    if (filters.comEmail) {
-      params.append("com_email", "true");
-      if (filters.tipoEmail.length > 0) {
-        params.append("tipo_email", filters.tipoEmail.join(","));
-      }
-    }
-    
-    if (filters.cnaes.length > 0) {
-      params.append("cnaes", filters.cnaes.join(","));
-    }
-    
-    if (filters.simplesNacional && filters.simplesNacional !== "todos_simples") {
-      params.append("simples_nacional", filters.simplesNacional);
-    }
-    
-    if (filters.mei && filters.mei !== "todos_mei") {
-      params.append("mei", filters.mei);
-    }
-    
-    if (filters.razaoSocial) {
-      params.append("razao_social", filters.razaoSocial);
-    }
-    
-    if (filters.porte.length > 0) {
-      params.append("porte", filters.porte.join(","));
-    }
-    
-    if (filters.capitalSocialMin > 0) {
-      params.append("capital_social_min", filters.capitalSocialMin.toString());
-    }
-    
-    if (filters.capitalSocialMax > 0) {
-      params.append("capital_social_max", filters.capitalSocialMax.toString());
-    }
-    
-    if (filters.naturezaJuridica.length > 0) {
-      params.append("natureza_juridica", filters.naturezaJuridica.join(","));
-    }
-    
-    const baseUrl = "http://localhost:3001/empresas";
-    const url = `${baseUrl}?${params.toString()}`;
-    
-    console.log("URL de busca:", url);
-    toast.info("Buscando empresas com os filtros aplicados");
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error("Erro na requisição:", response.status, response.statusText);
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log("Dados brutos da API (searchCompaniesByFilters):", data);
-    
-    if (Array.isArray(data)) {
-      return data;
-    } else if (data.empresas && Array.isArray(data.empresas)) {
-      return data.empresas;
-    } else {
-      console.log("Formato de resposta inesperado:", data);
-      return [];
-    }
+    console.log('Enviando requisição com filtros:', filters);
+    const response = await axios.get(API_URL, {
+      params: {
+        cnpj: filters.cnpj,
+        tipo: filters.tipo,
+        situacao_cadastral: filters.situacao_cadastral,
+        uf: filters.uf,
+        data_inicio_atividade: filters.data_inicio_atividade,
+        municipio: filters.municipio,
+        bairro: filters.bairro,
+        cep: filters.cep,
+        cnae_fiscal: filters.cnae_fiscal,
+        razao_social: filters.razao_social,
+        page: filters.page || 1,
+        limit: filters.limit || 10,
+      },
+    });
+    console.log('Resposta recebida:', response.data);
+    return response.data;
   } catch (error) {
-    toast.error("Erro ao buscar empresas");
-    console.error("Error searching companies by filters:", error);
-    return [];
+    console.error('Erro ao buscar empresas:', error);
+    throw error;
   }
 };
 
-export const formatCnpj = (cnpj: string): string => {
-  const cleaned = cnpj.replace(/[^\d]/g, "");
-  return cleaned.replace(
-    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    "$1.$2.$3/$4-$5"
-  );
-};
+// Mantemos a função searchCompanies como alias para compatibilidade com MainContent.tsx
+export const searchCompanies = searchCompaniesByFilters;

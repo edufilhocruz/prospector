@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const CompanySchema = new mongoose.Schema({
   cnpj: { type: String, required: true, unique: true },
@@ -28,5 +29,18 @@ const CompanySchema = new mongoose.Schema({
   ddd_telefone_2: String,
   email: String,
 });
+
+// Adicionar índices para os campos mais usados nos filtros
+CompanySchema.index({ uf: 1 });
+CompanySchema.index({ descricao_identificador_matriz_filial: 1 });
+CompanySchema.index({ descricao_situacao_cadastral: 1 });
+CompanySchema.index({ municipio: 1 });
+CompanySchema.index({ bairro: 1 });
+CompanySchema.index({ cep: 1 });
+CompanySchema.index({ cnae_fiscal: 1 });
+CompanySchema.index({ razao_social: 'text' });
+
+// Adicionar o plugin de paginação
+CompanySchema.plugin(mongoosePaginate);
 
 module.exports = mongoose.model('Company', CompanySchema);
