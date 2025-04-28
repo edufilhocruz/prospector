@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Company } from "./CnpjExplorer";
 import { formatCNPJ, formatDate, formatCapitalSocial } from "@/lib/utils";
 
+
 interface CompanyDetailsProps {
   company: Company;
   onClose: () => void;

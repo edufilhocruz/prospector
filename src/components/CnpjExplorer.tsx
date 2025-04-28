@@ -5,7 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { MainContent } from "./MainContent";
 import { CompanyDetails } from "./CompanyDetails";
 import { toast } from "sonner";
-import { fetchCnpjData } from "@/services/cnpjService";
+import { fetchCnpjData, searchCompaniesByFilters } from "@/services/cnpjService";
 import { CnpjFilters } from "@/types/cnpj";
 
 export interface Company {
@@ -83,13 +83,12 @@ export const CnpjExplorer = () => {
       toast.error("Por favor, adicione filtros ou um CNPJ para buscar");
       return;
     }
-
+    
     setIsLoading(true);
     setSelectedCompany(null);
-
+    
     if (searchTerm) {
       const data = await fetchCnpjData(searchTerm);
-      
       if (data) {
         setSearchResults([data]);
         toast.success(`CNPJ ${searchTerm} encontrado com sucesso`);
@@ -98,20 +97,19 @@ export const CnpjExplorer = () => {
       }
     } else {
       toast.info("Aplicando filtros de busca");
-      // In a real implementation, this would call a different API endpoint 
-      // that supports searching by filters
-      setSearchResults([]);
+      const results = await searchCompaniesByFilters(filters);
+      setSearchResults(results);
+      if (results.length > 0) {
+        toast.success(`${results.length} empresa(s) encontrada(s)`);
+      } else {
+        toast.info("Nenhuma empresa encontrada com os filtros aplicados");
+      }
     }
     
     setIsLoading(false);
   };
 
-  const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      ...newFilters,
-    }));
-  };
+
 
   const handleExport = () => {
     toast.info("Exportação de dados não implementada nesta versão");
