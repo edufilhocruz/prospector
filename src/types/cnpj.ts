@@ -1,4 +1,3 @@
-
 export interface CnpjFilters {
   tipo: string[];
   dataAberturaMin: string;

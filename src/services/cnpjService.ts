@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Company } from "@/components/CnpjExplorer";
 import { CnpjFilters } from "@/types/cnpj";
@@ -13,10 +12,11 @@ export const fetchCnpjData = async (cnpj: string): Promise<Company | null> => {
         toast.error(`CNPJ ${cnpj} não encontrado`);
         return null;
       }
-      throw new Error(`Error: ${response.statusText}`);
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log("Dados retornados por fetchCnpjData:", data);
     return data;
   } catch (error) {
     toast.error("Erro ao buscar dados do CNPJ");
@@ -27,10 +27,8 @@ export const fetchCnpjData = async (cnpj: string): Promise<Company | null> => {
 
 export const searchCompaniesByFilters = async (filters: CnpjFilters): Promise<Company[]> => {
   try {
-    // Construir parâmetros de consulta com base nos filtros
     const params = new URLSearchParams();
     
-    // Adicionar filtros relevantes aos parâmetros
     if (filters.tipo.length > 0) {
       params.append("tipo", filters.tipo.join(","));
     }
@@ -109,8 +107,7 @@ export const searchCompaniesByFilters = async (filters: CnpjFilters): Promise<Co
       params.append("natureza_juridica", filters.naturezaJuridica.join(","));
     }
     
-    // Construir a URL base para a pesquisa
-    const baseUrl = "https://minhareceita.org/empresas";
+    const baseUrl = "http://localhost:3001/empresas";
     const url = `${baseUrl}?${params.toString()}`;
     
     console.log("URL de busca:", url);
@@ -119,10 +116,12 @@ export const searchCompaniesByFilters = async (filters: CnpjFilters): Promise<Co
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
+      console.error("Erro na requisição:", response.status, response.statusText);
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log("Dados brutos da API (searchCompaniesByFilters):", data);
     
     if (Array.isArray(data)) {
       return data;

@@ -1,6 +1,4 @@
-
 import { useState } from "react";
-import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { MainContent } from "./MainContent";
 import { CompanyDetails } from "./CompanyDetails";
@@ -78,17 +76,20 @@ export const CnpjExplorer = () => {
     naturezaJuridica: [],
   });
 
+  const handleFilterChange = (newFilters: Partial<SearchFilters>) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      ...newFilters,
+    }));
+  };
+
   const handleSearch = async () => {
-    if (!searchTerm && filters.tipo.length === 0) {
-      toast.error("Por favor, adicione filtros ou um CNPJ para buscar");
-      return;
-    }
-    
     setIsLoading(true);
     setSelectedCompany(null);
-    
+
     if (searchTerm) {
       const data = await fetchCnpjData(searchTerm);
+      console.log('Dados retornados por fetchCnpjData:', data);
       if (data) {
         setSearchResults([data]);
         toast.success(`CNPJ ${searchTerm} encontrado com sucesso`);
@@ -98,6 +99,7 @@ export const CnpjExplorer = () => {
     } else {
       toast.info("Aplicando filtros de busca");
       const results = await searchCompaniesByFilters(filters);
+      console.log('Dados retornados por searchCompaniesByFilters:', results);
       setSearchResults(results);
       if (results.length > 0) {
         toast.success(`${results.length} empresa(s) encontrada(s)`);
@@ -105,11 +107,9 @@ export const CnpjExplorer = () => {
         toast.info("Nenhuma empresa encontrada com os filtros aplicados");
       }
     }
-    
+
     setIsLoading(false);
   };
-
-
 
   const handleExport = () => {
     toast.info("Exportação de dados não implementada nesta versão");
@@ -122,6 +122,8 @@ export const CnpjExplorer = () => {
           filters={filters}
           onFilterChange={handleFilterChange} 
           onSearch={handleSearch} 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
         <MainContent 
           companies={searchResults}
@@ -130,6 +132,7 @@ export const CnpjExplorer = () => {
           onExport={handleExport}
           isLoading={isLoading}
           totalResults={searchResults.length}
+          onSelectCompany={setSelectedCompany}
         />
       </div>
       {selectedCompany && (

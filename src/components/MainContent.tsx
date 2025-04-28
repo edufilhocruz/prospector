@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Company, SearchFilters } from "./CnpjExplorer";
 import { ResultsTable } from "./ResultsTable";
-import { useState } from "react";
+import { CnpjFilters, SearchFilters } from "@/types/cnpj";
+import { Company } from "./CnpjExplorer";
 
 interface MainContentProps {
   companies: Company[];
   filters: SearchFilters;
-  onFilterChange: (filters: Partial<SearchFilters>) => void;
+  onFilterChange: (filters: Partial<CnpjFilters>) => void;
   onExport: () => void;
   isLoading: boolean;
   totalResults: number;
+  onSelectCompany?: (company: Company) => void;
 }
 
 export const MainContent = ({
@@ -19,65 +19,34 @@ export const MainContent = ({
   onExport,
   isLoading,
   totalResults,
+  onSelectCompany,
 }: MainContentProps) => {
-  // Manter o useState para evitar erros de referência
-  const [openFilters, setOpenFilters] = useState<Record<string, boolean>>({
-    tipo: false,
-    dataAbertura: false,
-    situacaoCadastral: false,
-    endereco: false,
-    telefone: false,
-    email: false,
-    atividadeEconomica: false,
-    simplesNacional: false,
-    mei: false,
-    razaoSocial: false,
-    porte: false,
-    capitalSocial: false,
-    naturezaJuridica: false,
-  });
-
-  // Manter a função usada nos componentes
-  const toggleFilter = (filterName: string) => {
-    setOpenFilters((prev) => ({
-      ...prev,
-      [filterName]: !prev[filterName],
-    }));
-  };
-
   return (
-    <div className="flex-1 overflow-auto bg-white p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Empresas</h1>
-      <p className="text-gray-600 mb-6">
-        A pesquisa avançada de empresas permite que você encontre estabelecimentos para análise ou
-        prospecção, utilizando múltiplos critérios de filtro e exportando os resultados para uma lista em Excel.
-      </p>
-
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center text-green-600">
-          <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-          <span className="font-medium">{totalResults.toLocaleString('pt-BR')} estabelecimentos encontrados</span>
-        </div>
-        <div className="flex space-x-3">
-          <Button 
-            variant="outline" 
-            className="bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => {}}
-          >
-            <span className="mr-2">Amostra em Excel</span>
-          </Button>
-          <Button 
-            className="bg-[#0fb5ae] hover:bg-[#0ca39c] text-white"
-            onClick={onExport}
-          >
-            <span className="mr-2">Exportar</span>
-          </Button>
+    <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Pesquisa Avançada
+          </h1>
+          <p className="text-gray-600 mb-6">
+            A pesquisa avançada de empresas permite que você encontre
+            estabelecimentos para análise ou prospecção, utilizando múltiplos
+            critérios de filtro e exportando os resultados para uma lista em
+            Excel.
+          </p>
         </div>
       </div>
-
-      <div className="w-full">
-        <ResultsTable companies={companies} isLoading={isLoading} />
+      <div className="mb-6">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium text-[#0fb5ae]">{totalResults}</span>{" "}
+          {totalResults === 1 ? "estabelecimento encontrado" : "estabelecimentos encontrados"}
+        </div>
       </div>
+      <ResultsTable
+        companies={companies}
+        isLoading={isLoading}
+        onSelectCompany={onSelectCompany}
+      />
     </div>
   );
 };

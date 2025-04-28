@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FilterPanel } from "./FilterPanel";
 import { CnpjFilters } from "@/types/cnpj";
@@ -33,12 +32,15 @@ interface SidebarProps {
   filters: CnpjFilters;
   onFilterChange: (filters: Partial<CnpjFilters>) => void;
   onSearch: () => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 }
 
-export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => {
+export const Sidebar = ({ filters, onFilterChange, onSearch, searchTerm, setSearchTerm }: SidebarProps) => {
   const [openFilters, setOpenFilters] = useState<Record<string, boolean>>({
     tipo: false,
-    dataAbertura: false,
+    dataAberturaMin: false,
+    dataAberturaMax: false,
     situacaoCadastral: false,
     endereco: false,
     telefone: false,
@@ -55,7 +57,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
   const toggleFilter = (filterName: string) => {
     setOpenFilters(prev => ({
       ...prev,
-      [filterName]: !prev[filterName]
+      [filterName]: !prev[filterName],
     }));
   };
 
@@ -63,6 +65,18 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
     <div className="w-80 min-h-screen bg-[#14252e] text-white p-4 overflow-y-auto flex-shrink-0">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Filtros</h2>
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="cnpj" className="block text-sm mb-1">Buscar por CNPJ</label>
+        <Input
+          type="text"
+          id="cnpj"
+          className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
+          placeholder="Digite o CNPJ"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <Button
@@ -85,11 +99,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
               <Checkbox 
                 id="matriz" 
                 className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                checked={filters.tipo.includes("MATRIZ")}
+                checked={Array.isArray(filters.tipo) ? filters.tipo.includes("MATRIZ") : false}
                 onCheckedChange={(checked) => {
+                  const currentTipo = Array.isArray(filters.tipo) ? filters.tipo : [];
                   const newTipo = checked 
-                    ? [...filters.tipo, "MATRIZ"] 
-                    : filters.tipo.filter(t => t !== "MATRIZ");
+                    ? [...currentTipo, "MATRIZ"] 
+                    : currentTipo.filter(t => t !== "MATRIZ");
                   onFilterChange({ tipo: newTipo });
                 }}
               />
@@ -102,11 +117,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
               <Checkbox 
                 id="filial" 
                 className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                checked={filters.tipo.includes("FILIAL")}
+                checked={Array.isArray(filters.tipo) ? filters.tipo.includes("FILIAL") : false}
                 onCheckedChange={(checked) => {
+                  const currentTipo = Array.isArray(filters.tipo) ? filters.tipo : [];
                   const newTipo = checked 
-                    ? [...filters.tipo, "FILIAL"] 
-                    : filters.tipo.filter(t => t !== "FILIAL");
+                    ? [...currentTipo, "FILIAL"] 
+                    : currentTipo.filter(t => t !== "FILIAL");
                   onFilterChange({ tipo: newTipo });
                 }}
               />
@@ -131,7 +147,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="date"
                 id="data-min"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.dataAberturaMin}
+                value={filters.dataAberturaMin || ""}
                 onChange={(e) => onFilterChange({ dataAberturaMin: e.target.value })}
               />
             </div>
@@ -141,7 +157,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="date"
                 id="data-max"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.dataAberturaMax}
+                value={filters.dataAberturaMax || ""}
                 onChange={(e) => onFilterChange({ dataAberturaMax: e.target.value })}
               />
             </div>
@@ -160,11 +176,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 <Checkbox 
                   id={situacao.toLowerCase()}
                   className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                  checked={filters.situacaoCadastral.includes(situacao)}
+                  checked={Array.isArray(filters.situacaoCadastral) ? filters.situacaoCadastral.includes(situacao) : false}
                   onCheckedChange={(checked) => {
+                    const currentSituacaoCadastral = Array.isArray(filters.situacaoCadastral) ? filters.situacaoCadastral : [];
                     const newSituacao = checked
-                      ? [...filters.situacaoCadastral, situacao]
-                      : filters.situacaoCadastral.filter(s => s !== situacao);
+                      ? [...currentSituacaoCadastral, situacao]
+                      : currentSituacaoCadastral.filter(s => s !== situacao);
                     onFilterChange({ situacaoCadastral: newSituacao });
                   }}
                 />
@@ -184,7 +201,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
             <div>
               <label htmlFor="uf" className="block text-sm mb-1">Estados</label>
               <Select
-                value={filters.uf[0] || "todos_estados"}
+                value={filters.uf && filters.uf.length > 0 ? filters.uf[0] : "todos_estados"}
                 onValueChange={(value) => onFilterChange({ uf: value !== "todos_estados" ? [value] : [] })}
               >
                 <SelectTrigger className="w-full bg-[#1a2631] border-gray-700 text-white">
@@ -204,7 +221,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="text"
                 id="municipio"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.municipio.join(", ")}
+                value={Array.isArray(filters.municipio) ? filters.municipio.join(", ") : ""}
                 onChange={(e) => {
                   const values = e.target.value.split(",").map(v => v.trim()).filter(Boolean);
                   onFilterChange({ municipio: values });
@@ -217,7 +234,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="text"
                 id="bairro"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.bairro.join(", ")}
+                value={Array.isArray(filters.bairro) ? filters.bairro.join(", ") : ""}
                 onChange={(e) => {
                   const values = e.target.value.split(",").map(v => v.trim()).filter(Boolean);
                   onFilterChange({ bairro: values });
@@ -231,7 +248,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 id="cep"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
                 placeholder="00000-000"
-                value={filters.cep}
+                value={filters.cep || ""}
                 onChange={(e) => onFilterChange({ cep: e.target.value })}
               />
             </div>
@@ -249,7 +266,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
               <Checkbox 
                 id="with-phone" 
                 className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                checked={filters.comTelefone}
+                checked={filters.comTelefone || false}
                 onCheckedChange={(checked) => {
                   onFilterChange({ comTelefone: !!checked });
                 }}
@@ -264,11 +281,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                     <Checkbox 
                       id={tipoTel.toLowerCase()}
                       className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                      checked={filters.tipoTelefone.includes(tipoTel)}
+                      checked={Array.isArray(filters.tipoTelefone) ? filters.tipoTelefone.includes(tipoTel) : false}
                       onCheckedChange={(checked) => {
+                        const currentTipoTelefone = Array.isArray(filters.tipoTelefone) ? filters.tipoTelefone : [];
                         const newTipoTel = checked
-                          ? [...filters.tipoTelefone, tipoTel]
-                          : filters.tipoTelefone.filter(t => t !== tipoTel);
+                          ? [...currentTipoTelefone, tipoTel]
+                          : currentTipoTelefone.filter(t => t !== tipoTel);
                         onFilterChange({ tipoTelefone: newTipoTel });
                       }}
                     />
@@ -291,7 +309,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
               <Checkbox 
                 id="with-email" 
                 className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                checked={filters.comEmail}
+                checked={filters.comEmail || false}
                 onCheckedChange={(checked) => {
                   onFilterChange({ comEmail: !!checked });
                 }}
@@ -306,11 +324,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                     <Checkbox 
                       id={tipoEmail.toLowerCase()}
                       className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                      checked={filters.tipoEmail.includes(tipoEmail)}
+                      checked={Array.isArray(filters.tipoEmail) ? filters.tipoEmail.includes(tipoEmail) : false}
                       onCheckedChange={(checked) => {
+                        const currentTipoEmail = Array.isArray(filters.tipoEmail) ? filters.tipoEmail : [];
                         const newTipoEmail = checked
-                          ? [...filters.tipoEmail, tipoEmail]
-                          : filters.tipoEmail.filter(t => t !== tipoEmail);
+                          ? [...currentTipoEmail, tipoEmail]
+                          : currentTipoEmail.filter(t => t !== tipoEmail);
                         onFilterChange({ tipoEmail: newTipoEmail });
                       }}
                     />
@@ -336,7 +355,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 id="cnaes"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
                 placeholder="Adicione CNAEs separados por vírgula"
-                value={filters.cnaes.join(", ")}
+                value={Array.isArray(filters.cnaes) ? filters.cnaes.join(", ") : ""}
                 onChange={(e) => {
                   const values = e.target.value.split(",").map(v => v.trim()).filter(Boolean);
                   onFilterChange({ cnaes: values });
@@ -410,7 +429,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 id="razao-social"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
                 placeholder="Pesquisar por razão social"
-                value={filters.razaoSocial}
+                value={filters.razaoSocial || ""}
                 onChange={(e) => onFilterChange({ razaoSocial: e.target.value })}
               />
             </div>
@@ -429,11 +448,12 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 <Checkbox 
                   id={porte.toLowerCase().replace(/\s/g, '-')}
                   className="mr-2 data-[state=checked]:bg-[#0fb5ae] data-[state=checked]:border-[#0fb5ae]"
-                  checked={filters.porte.includes(porte)}
+                  checked={Array.isArray(filters.porte) ? filters.porte.includes(porte) : false}
                   onCheckedChange={(checked) => {
+                    const currentPorte = Array.isArray(filters.porte) ? filters.porte : [];
                     const newPorte = checked
-                      ? [...filters.porte, porte]
-                      : filters.porte.filter(p => p !== porte);
+                      ? [...currentPorte, porte]
+                      : currentPorte.filter(p => p !== porte);
                     onFilterChange({ porte: newPorte });
                   }}
                 />
@@ -467,7 +487,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="number"
                 id="capital-min"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.capitalSocialMin || ""}
+                value={filters.capitalSocialMin || 0}
                 onChange={(e) => onFilterChange({ capitalSocialMin: Number(e.target.value) || 0 })}
               />
             </div>
@@ -477,7 +497,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 type="number"
                 id="capital-max"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
-                value={filters.capitalSocialMax || ""}
+                value={filters.capitalSocialMax || 0}
                 onChange={(e) => onFilterChange({ capitalSocialMax: Number(e.target.value) || 0 })}
               />
             </div>
@@ -498,7 +518,7 @@ export const Sidebar = ({ filters, onFilterChange, onSearch }: SidebarProps) => 
                 id="natureza-juridica"
                 className="w-full p-2 border border-gray-700 rounded text-sm bg-[#1a2631] text-white"
                 placeholder="Adicione naturezas separadas por vírgula"
-                value={filters.naturezaJuridica.join(", ")}
+                value={Array.isArray(filters.naturezaJuridica) ? filters.naturezaJuridica.join(", ") : ""}
                 onChange={(e) => {
                   const values = e.target.value.split(",").map(v => v.trim()).filter(Boolean);
                   onFilterChange({ naturezaJuridica: values });
